@@ -2,14 +2,12 @@ import React from 'react';
 import Select from 'react-select';
 
 interface LevelFilterProps {
-  visible: boolean;
   uniqueLevels: string[];
   selectedLevels: string[];
   setSelectedLevels: (levels: string[]) => void;
 }
 
-const LevelFilter: React.FC<LevelFilterProps> = ({ visible, uniqueLevels, selectedLevels, setSelectedLevels }) => {
-  if (!visible || uniqueLevels.length === 0) return null;
+const LevelFilter: React.FC<LevelFilterProps> = ({ uniqueLevels, selectedLevels, setSelectedLevels }) => {
   const levelOptions = uniqueLevels.map(level => ({ value: level, label: level }));
   return (
     <div style={{ marginBottom: '20px' }}>

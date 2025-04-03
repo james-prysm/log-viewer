@@ -1,9 +1,9 @@
-// In App.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FiltersPanel from './components/FiltersPanel';
 import LogViewer from './components/LogViewer';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useLogStream } from './hooks/useLogStream';
+import debounce from 'lodash.debounce';
 
 const App: React.FC = () => {
   const {
@@ -22,10 +22,20 @@ const App: React.FC = () => {
     setTimeFilter,
   } = useLogStream();
 
-  // Maintain visibleColumns state (even if not used by FiltersPanel UI)
-  const [visibleColumns, setVisibleColumns] = useState({ time: true, level: true, msg: true, prefix: true });
   const [expandAccordions, setExpandAccordions] = useState(false);
   const [timeMode, setTimeMode] = useState<'absolute' | 'seconds' | 'milliseconds'>('absolute');
+  const [searchFilters, setSearchFilters] = useState<string[]>([]);
+  const [debouncedSearchFilters, setDebouncedSearchFilters] = useState<string[]>([]);
+
+  // Debounce searchFilters changes (using lodash.debounce)
+  const updateDebouncedSearchFilters = useMemo(
+    () => debounce((filters: string[]) => setDebouncedSearchFilters(filters), 300),
+    []
+  );
+
+  useEffect(() => {
+    updateDebouncedSearchFilters(searchFilters);
+  }, [searchFilters, updateDebouncedSearchFilters]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -47,6 +57,7 @@ const App: React.FC = () => {
     event.stopPropagation();
   };
 
+  // Memoized filtered logs
   const filteredEntries = useMemo(() => {
     let result = logs;
     if (selectedLevels.length > 0) {
@@ -62,8 +73,18 @@ const App: React.FC = () => {
           log.timestamp <= timeFilter[1]
       );
     }
+    if (debouncedSearchFilters.length > 0) {
+      result = result.filter(log => {
+        // Compute searchable text on the fly.
+        const searchText = `${log.time} ${log.level} ${log.msg} ${log.prefix} ${log.other}`.toLowerCase();
+        return debouncedSearchFilters.every(term =>
+          searchText.includes(term.toLowerCase())
+        );
+      });
+    }
     return result;
-  }, [logs, selectedLevels, selectedPrefixes, timeFilter]);
+  }, [logs, selectedLevels, selectedPrefixes, timeFilter, debouncedSearchFilters]);
+  
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -87,7 +108,6 @@ const App: React.FC = () => {
         ) : (
           <LogViewer
             entries={filteredEntries}
-            visibleColumns={visibleColumns}
             expandAccordions={expandAccordions}
             timeMode={timeMode}
             startTime={logs.length > 0 ? logs[0].timestamp : undefined}
@@ -106,7 +126,6 @@ const App: React.FC = () => {
         }}
       >
         <FiltersPanel
-          visibleColumns={visibleColumns}  // <-- now passed in
           onFileChange={handleFileChange}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -123,9 +142,12 @@ const App: React.FC = () => {
           setExpandAccordions={setExpandAccordions}
           timeMode={timeMode}
           setTimeMode={setTimeMode}
+          searchFilters={searchFilters}
+          setSearchFilters={setSearchFilters}
         />
       </div>
     </div>
   );
 };
+
 export default App;

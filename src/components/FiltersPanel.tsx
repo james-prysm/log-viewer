@@ -1,15 +1,15 @@
 import React from 'react';
-import FileUploadSection from './filters/FileUpload';
-import LevelFilterSection from './filters/LevelFilter';
-import PrefixFilterSection from './filters/PrefixFilter';
-import AccordionControlSection from './filters/AccordionControl';
+import FileUpload from './filters/FileUpload';
 import TimeFilterWithMode from './filters/TimeFilterWithMode';
+import LevelFilter from './filters/LevelFilter';
+import PrefixFilter from './filters/PrefixFilter';
+import AccordionControl from './filters/AccordionControl';
+import SearchFilter from './filters/SearchFilter';
 
 interface FiltersPanelProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  visibleColumns: Record<string, boolean>;
   uniqueLevels: string[];
   selectedLevels: string[];
   setSelectedLevels: (levels: string[]) => void;
@@ -23,20 +23,20 @@ interface FiltersPanelProps {
   setExpandAccordions: (val: boolean) => void;
   timeMode: 'absolute' | 'seconds' | 'milliseconds';
   setTimeMode: (mode: 'absolute' | 'seconds' | 'milliseconds') => void;
+  searchFilters: string[];
+  setSearchFilters: (filters: string[]) => void;
 }
-
 
 const FiltersPanel: React.FC<FiltersPanelProps> = (props) => {
   return (
     <div>
       <h2>Controls</h2>
-      <FileUploadSection
+      <FileUpload
         onFileChange={props.onFileChange}
         onDragOver={props.onDragOver}
         onDrop={props.onDrop}
       />
       <TimeFilterWithMode
-        visible={props.visibleColumns["time"]}
         allTimeRange={props.allTimeRange}
         timeFilter={props.timeFilter}
         setTimeFilter={props.setTimeFilter}
@@ -44,19 +44,21 @@ const FiltersPanel: React.FC<FiltersPanelProps> = (props) => {
         setTimeMode={props.setTimeMode}
         startTime={props.allTimeRange ? props.allTimeRange[0] : undefined}
       />
-      <LevelFilterSection
-        visible={props.visibleColumns["level"]}
+      <LevelFilter
         uniqueLevels={props.uniqueLevels}
         selectedLevels={props.selectedLevels}
         setSelectedLevels={props.setSelectedLevels}
       />
-      <PrefixFilterSection
-        visible={props.visibleColumns["prefix"]}
+      <PrefixFilter
         uniquePrefixes={props.uniquePrefixes}
         selectedPrefixes={props.selectedPrefixes}
         setSelectedPrefixes={props.setSelectedPrefixes}
       />
-      <AccordionControlSection
+      <SearchFilter
+        searchFilters={props.searchFilters}
+        setSearchFilters={props.setSearchFilters}
+      />
+      <AccordionControl
         expandAccordions={props.expandAccordions}
         setExpandAccordions={props.setExpandAccordions}
       />

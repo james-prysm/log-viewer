@@ -7,13 +7,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 interface LogCardProps {
   log: LogEntry;
-  visibleColumns: Record<string, boolean>;
   expandAccordions: boolean;
   timeMode: 'absolute' | 'seconds' | 'milliseconds';
   startTime?: number;
 }
 
-const LogCard: React.FC<LogCardProps> = ({ log, visibleColumns, expandAccordions, timeMode, startTime }) => {
+const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, startTime }) => {
   // Determine background and level text colors based on log level.
   let bgColor = 'white';
   let levelTextColor = 'black';

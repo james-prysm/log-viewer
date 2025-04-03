@@ -2,14 +2,12 @@ import React from 'react';
 import Select from 'react-select';
 
 interface PrefixFilterProps {
-  visible: boolean;
   uniquePrefixes: string[];
   selectedPrefixes: string[];
   setSelectedPrefixes: (prefixes: string[]) => void;
 }
 
-const PrefixFilter: React.FC<PrefixFilterProps> = ({ visible, uniquePrefixes, selectedPrefixes, setSelectedPrefixes }) => {
-  if (!visible) return null;
+const PrefixFilter: React.FC<PrefixFilterProps> = ({ uniquePrefixes, selectedPrefixes, setSelectedPrefixes }) => {
   const prefixOptions = [
     { value: '', label: 'No Prefix' },
     ...uniquePrefixes.map(prefix => ({ value: prefix, label: prefix })),

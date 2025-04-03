@@ -5,7 +5,6 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 interface TimeFilterWithModeProps {
-  visible: boolean;
   allTimeRange: [number, number] | null;
   timeFilter: [number, number] | null;
   setTimeFilter: (range: [number, number]) => void;
@@ -15,7 +14,6 @@ interface TimeFilterWithModeProps {
 }
 
 const TimeFilterWithMode: React.FC<TimeFilterWithModeProps> = ({
-  visible,
   allTimeRange,
   timeFilter,
   setTimeFilter,
@@ -23,7 +21,7 @@ const TimeFilterWithMode: React.FC<TimeFilterWithModeProps> = ({
   setTimeMode,
   startTime,
 }) => {
-  if (!visible || !allTimeRange || !timeFilter) return null;
+  if ( !allTimeRange || !timeFilter) return null;
 
   const formatTime = (ts: number): string => {
     if (timeMode === 'absolute') {

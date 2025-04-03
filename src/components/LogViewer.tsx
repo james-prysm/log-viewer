@@ -4,13 +4,12 @@ import { LogEntry } from '../types';
 
 interface LogViewerProps {
   entries: LogEntry[];
-  visibleColumns: Record<string, boolean>;
   expandAccordions: boolean;
   timeMode: 'absolute' | 'seconds' | 'milliseconds';
   startTime?: number;
 }
 
-const LogViewer: React.FC<LogViewerProps> = ({ entries, visibleColumns, expandAccordions, timeMode, startTime }) => {
+const LogViewer: React.FC<LogViewerProps> = ({ entries, expandAccordions, timeMode, startTime }) => {
   return (
     <div
       style={{
@@ -25,7 +24,6 @@ const LogViewer: React.FC<LogViewerProps> = ({ entries, visibleColumns, expandAc
         <LogCard
           key={index}
           log={entry}
-          visibleColumns={visibleColumns}
           expandAccordions={expandAccordions}
           timeMode={timeMode}
           startTime={startTime}
