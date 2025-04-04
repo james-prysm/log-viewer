@@ -47,7 +47,7 @@ function createWindow() {
 
 // IPC handler to search the project using ripgrep.
 ipcMain.handle('search-project', async (event, { searchTerm, projectPath }) => {
-  const command = `rg --max-count=1 --json "${searchTerm}" "${projectPath}"`;
+  const command = `rg --max-count=1 --json -g '!**/*_test.go' "${searchTerm}" "${projectPath}"`;
   return new Promise((resolve) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {

@@ -40,6 +40,7 @@ build/Release
 
 # Production build
 /build
+/build-electron
 
 # Dependency directories
 node_modules/

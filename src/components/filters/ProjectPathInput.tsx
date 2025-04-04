@@ -10,7 +10,7 @@ const ProjectPathInput: React.FC<ProjectPathInputProps> = ({ projectPath, setPro
     <h3>Project Root Path</h3>
     <input
       type="text"
-      value={projectPath}
+      value={projectPath ? projectPath : '/Users/james/git/prysm'}
       onChange={(e) => setProjectPath(e.target.value)}
       placeholder="Enter your project root path"
       style={{ width: '100%', padding: '4px', boxSizing: 'border-box' }}

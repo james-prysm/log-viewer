@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const [timeMode, setTimeMode] = useState<'absolute' | 'seconds' | 'milliseconds'>('absolute');
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
   // New state for project path from the ProjectPathInput component.
-  const [projectPath, setProjectPath] = useState('');
+  const [projectPath, setProjectPath] = useState('/Users/james/git/prysm');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
