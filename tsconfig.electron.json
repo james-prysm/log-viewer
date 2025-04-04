@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "target": "ES2019",                          
+      "module": "CommonJS",                        
+      "lib": ["es2019"],
+      "allowJs": false,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "moduleResolution": "node",
+      "resolveJsonModule": true,
+      "outDir": "build-electron",                 
+      "sourceMap": true,
+      "noImplicitAny": false
+    },
+    "include": [
+      "src-electron/**/*"                         
+    ]
+  }
+  

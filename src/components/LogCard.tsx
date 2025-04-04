@@ -3,7 +3,6 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { searchProject, openFileInGoland } from '../utils/sourceSearch';
 import { LogEntry } from '../types';
 
 interface LogCardProps {
@@ -15,7 +14,6 @@ interface LogCardProps {
 }
 
 const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, startTime, projectPath }) => {
-  // Determine background and level text colors based on log level.
   let bgColor = 'white';
   let levelTextColor = 'black';
   const levelLower = log.level.toLowerCase();
@@ -33,7 +31,6 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
     levelTextColor = 'blue';
   }
 
-  // Compute display time based on the selected time mode.
   let displayTime = log.time;
   if (log.timestamp !== undefined && startTime !== undefined) {
     if (timeMode === 'absolute') {
@@ -45,7 +42,6 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
     }
   }
 
-  // Parse the "other" field into key/value pairs.
   const otherKeyValues = log.other
     .split(';')
     .map(item => item.trim())
@@ -55,25 +51,23 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
       return { key, value };
     });
 
-  // Always call hooks at the top.
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   useEffect(() => {
     setIsExpanded(expandAccordions);
   }, [expandAccordions]);
 
-  // Handler to search for the originating file when the message is clicked.
+  // Handler for clicking on the log message.
   const handleMessageClick = async () => {
-    // Use a heuristic search term: first 50 characters of the message.
+    // Use a heuristic for a search term; e.g., first 50 characters of the message.
     const searchTerm = log.msg.substring(0, 50);
-    const result = await searchProject(searchTerm, projectPath);
+    const result = await window.electronAPI.searchProject(searchTerm, projectPath);
     if (result) {
-      openFileInGoland(projectPath, result.filePath, result.lineNumber);
+      await window.electronAPI.openFileInGoland(projectPath, result.filePath, result.lineNumber);
     } else {
       alert('Source not found.');
     }
   };
 
-  // Define header row with fixed column widths.
   const headerRow = (
     <div style={{ display: 'flex', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
       <div style={{ width: '200px', textAlign: 'left' }}>{displayTime}</div>
@@ -86,13 +80,10 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
       >
         {log.msg}
       </div>
-      <div style={{ width: '150px', textAlign: 'right', paddingRight: '10px' }}>
-        {log.prefix}
-      </div>
+      <div style={{ width: '150px', textAlign: 'right', paddingRight: '10px' }}>{log.prefix}</div>
     </div>
   );
 
-  // Define details content for extra "other" data.
   const detailsContent = (
     <div style={{ padding: '0 10px 10px 10px', boxSizing: 'border-box' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -102,9 +93,7 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
               <td style={{ border: '1px solid #ddd', padding: '4px', fontWeight: 'bold', width: '40%' }}>
                 {pair.key}
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '4px' }}>
-                {pair.value}
-              </td>
+              <td style={{ border: '1px solid #ddd', padding: '4px' }}>{pair.value}</td>
             </tr>
           ))}
         </tbody>
@@ -112,22 +101,19 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
     </div>
   );
 
-  // Define the card container style.
   const cardStyle: React.CSSProperties = {
     backgroundColor: bgColor,
     border: '1px solid #ccc',
     borderRadius: '4px',
     width: '1048px',
-    margin: '10px auto', // centers the card horizontally with vertical spacing
+    margin: '10px auto',
     boxSizing: 'border-box',
   };
 
-  // If there's no extra "other" data, render a simple card.
   if (otherKeyValues.length === 0) {
     return <div style={cardStyle}>{headerRow}</div>;
   }
 
-  // Otherwise, render as an Accordion.
   return (
     <div style={cardStyle}>
       <Accordion
