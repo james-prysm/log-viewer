@@ -14,14 +14,26 @@ export const useLogStream = () => {
 
   const processFile = useCallback(async (file: File) => {
     setLoading(true);
+    setLogs([]);
+    setProgress(0);
+    const fileSize = file.size;
     const reader = file.stream().getReader();
     const decoder = new TextDecoder('utf-8');
-    let { done, value } = await reader.read();
+
+    let bytesRead = 0;
     let accumulated = "";
     const regex = /(\w+)=(".*?"|\S+)/g;
     const newLogs: LogEntry[] = [];
+    const levelSet = new Set<string>();
+    const prefixSet = new Set<string>();
 
-    while (!done) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytesRead += value!.length;
+      const newProgress = Math.min((bytesRead / fileSize) * 100, 100);
+      setProgress(newProgress);
+      
       accumulated += decoder.decode(value!, { stream: true });
       const lines = accumulated.split(/\r?\n/);
       accumulated = lines.pop() || "";
@@ -44,15 +56,22 @@ export const useLogStream = () => {
                 entry.timestamp = ts;
               }
             }
+            if (key === "level") {
+              levelSet.add(val);
+            }
+            if (key === "prefix") {
+              prefixSet.add(val);
+            }
           } else {
             entry.other += entry.other ? `; ${key}=${val}` : `${key}=${val}`;
           }
         }
         newLogs.push(entry);
       }
-      ({ done, value } = await reader.read());
+      // Yield control so the UI can update
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
-    // Process any remaining text:
+    // Process any remaining text.
     accumulated += decoder.decode();
     if (accumulated.trim().length > 0) {
       const lines = accumulated.split(/\r?\n/);
@@ -75,6 +94,12 @@ export const useLogStream = () => {
                 entry.timestamp = ts;
               }
             }
+            if (key === "level") {
+              levelSet.add(val);
+            }
+            if (key === "prefix") {
+              prefixSet.add(val);
+            }
           } else {
             entry.other += entry.other ? `; ${key}=${val}` : `${key}=${val}`;
           }
@@ -83,23 +108,17 @@ export const useLogStream = () => {
       }
     }
     
-    // Update logs state:
+    // Update states.
     setLogs(newLogs);
-
-    // Compute unique levels:
-    const levels = Array.from(new Set(newLogs.map(log => log.level))).sort();
+    const levels = Array.from(levelSet).sort();
     setUniqueLevels(levels);
     setSelectedLevels(levels);
-
-    // Compute unique prefixes (ensure empty string is included for "No Prefix"):
-    let prefixes = Array.from(new Set(newLogs.map(log => log.prefix))).sort();
+    let prefixes = Array.from(prefixSet).sort();
     if (!prefixes.includes('')) {
       prefixes = ['', ...prefixes];
     }
     setUniquePrefixes(prefixes);
     setSelectedPrefixes(prefixes);
-
-    // Compute overall time range:
     const timestamps = newLogs.filter(log => log.timestamp !== undefined).map(log => log.timestamp as number);
     if (timestamps.length > 0) {
       const minTime = Math.min(...timestamps);
@@ -107,14 +126,23 @@ export const useLogStream = () => {
       setAllTimeRange([minTime, maxTime]);
       setTimeFilter([minTime, maxTime]);
     }
-    
-    console.log('Unique Levels:', levels);
-    console.log('Unique Prefixes:', prefixes);
-    console.log('Time Range:', allTimeRange, timeFilter);
-    
     setLoading(false);
     setProgress(100);
   }, []);
 
-  return { logs, progress, loading, processFile, uniqueLevels, selectedLevels, setSelectedLevels, uniquePrefixes, selectedPrefixes, setSelectedPrefixes, allTimeRange, timeFilter, setTimeFilter };
+  return {
+    logs,
+    progress,
+    loading,
+    processFile,
+    uniqueLevels,
+    selectedLevels,
+    setSelectedLevels,
+    uniquePrefixes,
+    selectedPrefixes,
+    setSelectedPrefixes,
+    allTimeRange,
+    timeFilter,
+    setTimeFilter,
+  };
 };

@@ -3,6 +3,7 @@ import FiltersPanel from './components/FiltersPanel';
 import LogViewer from './components/LogViewer';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useLogStream } from './hooks/useLogStream';
+import { filterLogs } from './utils/filterLogs';
 import debounce from 'lodash.debounce';
 
 const App: React.FC = () => {
@@ -22,12 +23,13 @@ const App: React.FC = () => {
     setTimeFilter,
   } = useLogStream();
 
+  // No visibleColumns or toggleColumn since we're not using column toggles.
   const [expandAccordions, setExpandAccordions] = useState(false);
   const [timeMode, setTimeMode] = useState<'absolute' | 'seconds' | 'milliseconds'>('absolute');
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
   const [debouncedSearchFilters, setDebouncedSearchFilters] = useState<string[]>([]);
 
-  // Debounce searchFilters changes (using lodash.debounce)
+  // Debounce searchFilters updates (300ms delay)
   const updateDebouncedSearchFilters = useMemo(
     () => debounce((filters: string[]) => setDebouncedSearchFilters(filters), 300),
     []
@@ -57,38 +59,19 @@ const App: React.FC = () => {
     event.stopPropagation();
   };
 
-  // Memoized filtered logs
+  // Memoize filtering using our external filterLogs utility.
   const filteredEntries = useMemo(() => {
-    let result = logs;
-    if (selectedLevels.length > 0) {
-      result = result.filter(log => selectedLevels.includes(log.level));
-    }
-    if (selectedPrefixes.length > 0) {
-      result = result.filter(log => selectedPrefixes.includes(log.prefix));
-    }
-    if (timeFilter) {
-      result = result.filter(
-        log => log.timestamp !== undefined &&
-          log.timestamp >= timeFilter[0] &&
-          log.timestamp <= timeFilter[1]
-      );
-    }
-    if (debouncedSearchFilters.length > 0) {
-      result = result.filter(log => {
-        // Compute searchable text on the fly.
-        const searchText = `${log.time} ${log.level} ${log.msg} ${log.prefix} ${log.other}`.toLowerCase();
-        return debouncedSearchFilters.every(term =>
-          searchText.includes(term.toLowerCase())
-        );
-      });
-    }
-    return result;
+    return filterLogs(logs, {
+      selectedLevels,
+      selectedPrefixes,
+      timeFilter,
+      searchFilters: debouncedSearchFilters,
+    });
   }, [logs, selectedLevels, selectedPrefixes, timeFilter, debouncedSearchFilters]);
-  
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      {/* Main log viewer container */}
+      {/* Main Log Viewer Container */}
       <div
         style={{
           flex: 1,
@@ -115,7 +98,7 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Filters panel */}
+      {/* Filters Panel */}
       <div
         style={{
           width: '300px',
