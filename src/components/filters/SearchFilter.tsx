@@ -28,6 +28,11 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ searchFilters, setSearchFil
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              addSearchTerm();
+            }
+          }}
           placeholder="Enter search term"
           style={{ flex: 1, padding: '4px' }}
         />

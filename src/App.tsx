@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import FiltersPanel from './components/FiltersPanel';
 import LogViewer from './components/LogViewer';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useLogStream } from './hooks/useLogStream';
-import { filterLogs } from './utils/filterLogs';
-import debounce from 'lodash.debounce';
 
 const App: React.FC = () => {
   const {
@@ -23,21 +21,12 @@ const App: React.FC = () => {
     setTimeFilter,
   } = useLogStream();
 
-  // No visibleColumns or toggleColumn since we're not using column toggles.
+  // No visibleColumns state anymore.
   const [expandAccordions, setExpandAccordions] = useState(false);
   const [timeMode, setTimeMode] = useState<'absolute' | 'seconds' | 'milliseconds'>('absolute');
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
-  const [debouncedSearchFilters, setDebouncedSearchFilters] = useState<string[]>([]);
-
-  // Debounce searchFilters updates (300ms delay)
-  const updateDebouncedSearchFilters = useMemo(
-    () => debounce((filters: string[]) => setDebouncedSearchFilters(filters), 300),
-    []
-  );
-
-  useEffect(() => {
-    updateDebouncedSearchFilters(searchFilters);
-  }, [searchFilters, updateDebouncedSearchFilters]);
+  // New state for project path from the ProjectPathInput component.
+  const [projectPath, setProjectPath] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -59,15 +48,24 @@ const App: React.FC = () => {
     event.stopPropagation();
   };
 
-  // Memoize filtering using our external filterLogs utility.
+  // Apply filters to logs.
   const filteredEntries = useMemo(() => {
-    return filterLogs(logs, {
-      selectedLevels,
-      selectedPrefixes,
-      timeFilter,
-      searchFilters: debouncedSearchFilters,
-    });
-  }, [logs, selectedLevels, selectedPrefixes, timeFilter, debouncedSearchFilters]);
+    let result = logs;
+    if (selectedLevels.length > 0) {
+      result = result.filter(log => selectedLevels.includes(log.level));
+    }
+    if (selectedPrefixes.length > 0) {
+      result = result.filter(log => selectedPrefixes.includes(log.prefix));
+    }
+    if (timeFilter) {
+      result = result.filter(
+        log => log.timestamp !== undefined &&
+          log.timestamp >= timeFilter[0] &&
+          log.timestamp <= timeFilter[1]
+      );
+    }
+    return result;
+  }, [logs, selectedLevels, selectedPrefixes, timeFilter]);
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -86,7 +84,7 @@ const App: React.FC = () => {
         {loading ? (
           <div style={{ width: '100%', textAlign: 'center', marginTop: '20px' }}>
             <LinearProgress variant="determinate" value={progress} />
-            <p>Loading logs... {progress}%</p>
+            <p>Loading logs... {Math.round(progress)}%</p>
           </div>
         ) : (
           <LogViewer
@@ -94,6 +92,7 @@ const App: React.FC = () => {
             expandAccordions={expandAccordions}
             timeMode={timeMode}
             startTime={logs.length > 0 ? logs[0].timestamp : undefined}
+            projectPath={projectPath}
           />
         )}
       </div>
@@ -127,6 +126,8 @@ const App: React.FC = () => {
           setTimeMode={setTimeMode}
           searchFilters={searchFilters}
           setSearchFilters={setSearchFilters}
+          projectPath={projectPath}
+          setProjectPath={setProjectPath}
         />
       </div>
     </div>

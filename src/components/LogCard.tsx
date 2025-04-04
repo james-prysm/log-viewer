@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { LogEntry } from '../types';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { searchProject, openFileInGoland } from '../utils/sourceSearch';
+import { LogEntry } from '../types';
 
 interface LogCardProps {
   log: LogEntry;
   expandAccordions: boolean;
   timeMode: 'absolute' | 'seconds' | 'milliseconds';
   startTime?: number;
+  projectPath: string;
 }
 
-const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, startTime }) => {
+const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, startTime, projectPath }) => {
   // Determine background and level text colors based on log level.
   let bgColor = 'white';
   let levelTextColor = 'black';
@@ -59,21 +61,40 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
     setIsExpanded(expandAccordions);
   }, [expandAccordions]);
 
-  // Define the header row (always visible).
+  // Handler to search for the originating file when the message is clicked.
+  const handleMessageClick = async () => {
+    // Use a heuristic search term: first 50 characters of the message.
+    const searchTerm = log.msg.substring(0, 50);
+    const result = await searchProject(searchTerm, projectPath);
+    if (result) {
+      openFileInGoland(projectPath, result.filePath, result.lineNumber);
+    } else {
+      alert('Source not found.');
+    }
+  };
+
+  // Define header row with fixed column widths.
   const headerRow = (
-    <div style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px' }}>
-      <div style={{ textAlign: 'left', marginRight: '8px' }}>{displayTime}</div>
-      <div style={{ textAlign: 'left', marginRight: '8px', fontWeight: 'bold', color: levelTextColor }}>
+    <div style={{ display: 'flex', alignItems: 'center', padding: '10px', boxSizing: 'border-box' }}>
+      <div style={{ width: '200px', textAlign: 'left' }}>{displayTime}</div>
+      <div style={{ width: '150px', textAlign: 'left', fontWeight: 'bold', color: levelTextColor }}>
         {log.level}
       </div>
-      <div style={{ textAlign: 'left', flex: 1 }}>{log.msg}</div>
-      <div style={{ textAlign: 'right' }}>{log.prefix}</div>
+      <div
+        style={{ flex: 1, textAlign: 'left', cursor: 'pointer', textDecoration: 'underline' }}
+        onClick={handleMessageClick}
+      >
+        {log.msg}
+      </div>
+      <div style={{ width: '150px', textAlign: 'right', paddingRight: '10px' }}>
+        {log.prefix}
+      </div>
     </div>
   );
 
-  // Define details (only the extra data).
-  const detailsContent = otherKeyValues.length > 0 && (
-    <div style={{ padding: '0 10px 10px 10px' }}>
+  // Define details content for extra "other" data.
+  const detailsContent = (
+    <div style={{ padding: '0 10px 10px 10px', boxSizing: 'border-box' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <tbody>
           {otherKeyValues.map((pair, index) => (
@@ -91,16 +112,17 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
     </div>
   );
 
-  // Define the card container style with no extra vertical margins.
+  // Define the card container style.
   const cardStyle: React.CSSProperties = {
     backgroundColor: bgColor,
     border: '1px solid #ccc',
     borderRadius: '4px',
     width: '1048px',
-    margin: '0', // centers the card horizontally; no extra vertical space.
+    margin: '10px auto', // centers the card horizontally with vertical spacing
+    boxSizing: 'border-box',
   };
 
-  // If there is no extra "other" data, render a simple card.
+  // If there's no extra "other" data, render a simple card.
   if (otherKeyValues.length === 0) {
     return <div style={cardStyle}>{headerRow}</div>;
   }
@@ -112,12 +134,15 @@ const LogCard: React.FC<LogCardProps> = ({ log, expandAccordions, timeMode, star
         expanded={isExpanded}
         onChange={() => setIsExpanded(prev => !prev)}
         elevation={0}
-        style={{ backgroundColor: bgColor }}
+        style={{ backgroundColor: bgColor, boxSizing: 'border-box' }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ backgroundColor: bgColor, padding: 0 }}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          style={{ backgroundColor: bgColor, padding: 0, boxSizing: 'border-box' }}
+        >
           {headerRow}
         </AccordionSummary>
-        <AccordionDetails style={{ backgroundColor: bgColor, padding: 0 }}>
+        <AccordionDetails style={{ backgroundColor: bgColor, padding: 0, boxSizing: 'border-box' }}>
           {detailsContent}
         </AccordionDetails>
       </Accordion>

@@ -22,6 +22,7 @@ export const useLogStream = () => {
 
     let bytesRead = 0;
     let accumulated = "";
+    // This regex should match key=value pairs for keys: time, level, msg, prefix, etc.
     const regex = /(\w+)=(".*?"|\S+)/g;
     const newLogs: LogEntry[] = [];
     const levelSet = new Set<string>();
@@ -33,16 +34,19 @@ export const useLogStream = () => {
       bytesRead += value!.length;
       const newProgress = Math.min((bytesRead / fileSize) * 100, 100);
       setProgress(newProgress);
-      
+
       accumulated += decoder.decode(value!, { stream: true });
       const lines = accumulated.split(/\r?\n/);
+      // Keep the last possibly incomplete line.
       accumulated = lines.pop() || "";
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
         let entry: LogEntry = { time: "", level: "", msg: "", prefix: "", other: "" };
+        let matchFound = false;
         let match: RegExpExecArray | null;
         while ((match = regex.exec(trimmed)) !== null) {
+          matchFound = true;
           const key = match[1];
           let val = match[2];
           if (val.startsWith('"') && val.endsWith('"')) {
@@ -66,9 +70,13 @@ export const useLogStream = () => {
             entry.other += entry.other ? `; ${key}=${val}` : `${key}=${val}`;
           }
         }
+        // If no key=value pairs were found, store the raw line in msg.
+        if (!matchFound) {
+          entry.msg = trimmed;
+        }
         newLogs.push(entry);
       }
-      // Yield control so the UI can update
+      // Yield control so UI can update
       await new Promise(resolve => setTimeout(resolve, 0));
     }
     // Process any remaining text.
@@ -79,8 +87,10 @@ export const useLogStream = () => {
         const trimmed = line.trim();
         if (!trimmed) continue;
         let entry: LogEntry = { time: "", level: "", msg: "", prefix: "", other: "" };
+        let matchFound = false;
         let match: RegExpExecArray | null;
         while ((match = regex.exec(trimmed)) !== null) {
+          matchFound = true;
           const key = match[1];
           let val = match[2];
           if (val.startsWith('"') && val.endsWith('"')) {
@@ -104,10 +114,13 @@ export const useLogStream = () => {
             entry.other += entry.other ? `; ${key}=${val}` : `${key}=${val}`;
           }
         }
+        if (!matchFound) {
+          entry.msg = trimmed;
+        }
         newLogs.push(entry);
       }
     }
-    
+
     // Update states.
     setLogs(newLogs);
     const levels = Array.from(levelSet).sort();
@@ -119,7 +132,9 @@ export const useLogStream = () => {
     }
     setUniquePrefixes(prefixes);
     setSelectedPrefixes(prefixes);
-    const timestamps = newLogs.filter(log => log.timestamp !== undefined).map(log => log.timestamp as number);
+    const timestamps = newLogs
+      .filter(log => log.timestamp !== undefined)
+      .map(log => log.timestamp as number);
     if (timestamps.length > 0) {
       const minTime = Math.min(...timestamps);
       const maxTime = Math.max(...timestamps);

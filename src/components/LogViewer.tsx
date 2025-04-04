@@ -7,16 +7,17 @@ interface LogViewerProps {
   expandAccordions: boolean;
   timeMode: 'absolute' | 'seconds' | 'milliseconds';
   startTime?: number;
+  projectPath: string;
 }
 
-const LogViewer: React.FC<LogViewerProps> = ({ entries, expandAccordions, timeMode, startTime }) => {
+const LogViewer: React.FC<LogViewerProps> = ({ entries, expandAccordions, timeMode, startTime, projectPath }) => {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center', // centers each LogCard horizontally
-        gap: 0, // no extra spacing between cards
+        alignItems: 'center',
+        gap: 0,
         width: '100%',
       }}
     >
@@ -27,6 +28,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ entries, expandAccordions, timeMo
           expandAccordions={expandAccordions}
           timeMode={timeMode}
           startTime={startTime}
+          projectPath={projectPath}
         />
       ))}
     </div>

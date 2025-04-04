@@ -5,6 +5,7 @@ import LevelFilter from './filters/LevelFilter';
 import PrefixFilter from './filters/PrefixFilter';
 import AccordionControl from './filters/AccordionControl';
 import SearchFilter from './filters/SearchFilter';
+import ProjectPathInput from './filters/ProjectPathInput';
 
 interface FiltersPanelProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -25,12 +26,18 @@ interface FiltersPanelProps {
   setTimeMode: (mode: 'absolute' | 'seconds' | 'milliseconds') => void;
   searchFilters: string[];
   setSearchFilters: (filters: string[]) => void;
+  projectPath: string;
+  setProjectPath: (path: string) => void;
 }
 
 const FiltersPanel: React.FC<FiltersPanelProps> = (props) => {
   return (
     <div>
       <h2>Controls</h2>
+      <ProjectPathInput
+        projectPath={props.projectPath}
+        setProjectPath={props.setProjectPath}
+      />
       <FileUpload
         onFileChange={props.onFileChange}
         onDragOver={props.onDragOver}
